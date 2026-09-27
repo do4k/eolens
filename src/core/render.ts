@@ -1,12 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { extractEgfBitmap } from './egf/egf.js';
-import { readMap } from './map.js';
+import { LAYER_GFX_FILE, readMap } from './map.js';
 import { encodePng } from './png.js';
-
-// Map layer index -> gfxNNN.egf file. Mirrors eoweb LAYER_GFX_MAP (src/map.ts):
-// Ground, Objects, Overlay, DownWall, RightWall, Roof, Top, Shadow, Overlay2.
-const LAYER_GFX_FILE = [3, 4, 5, 6, 6, 7, 3, 22, 5];
 
 const TILE_W = 64;
 const TILE_H = 32;

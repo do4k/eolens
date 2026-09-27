@@ -14,6 +14,7 @@ import {
   mapToJson,
   readMap,
 } from '../core/map.js';
+import { encodePng } from '../core/png.js';
 import {
   detectPubType,
   jsonToPub,
@@ -22,7 +23,8 @@ import {
   queryPub,
   readPub,
 } from '../core/pub.js';
-import { extractEgfBitmap, listEgfResources } from '../core/egf/egf.js';
+import { extractEgfBitmap, listEgfResources, sheetEgfResources } from '../core/egf/egf.js';
+import { getMapTileCensus } from '../core/map.js';
 import { renderMapPreview } from '../core/render.js';
 import { getQuestSummary, questToJson, readQuestFile } from '../core/quest.js';
 
@@ -194,6 +196,47 @@ export function createMcpServer(): Server {
               outPath: { type: 'string', description: 'Output .bmp file path' },
             },
             required: ['filePath', 'resourceId', 'outPath'],
+          },
+        },
+        {
+          name: 'eolens_map_tiles',
+          description:
+            'Count graphic-ID usage per layer on an .emf map (which tiles dominate, e.g. road networks) without dumping the full grid. Reports EGF resource IDs as graphic + 100.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              filePath: { type: 'string', description: 'Path to .emf map file' },
+            },
+            required: ['filePath'],
+          },
+        },
+        {
+          name: 'eolens_egf_extract',
+          description:
+            'Extract and decode a bitmap resource from an .egf archive. Writes a standard 32-bit BMP by default, or PNG when outPath ends in .png (PNG also returned as an image).',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              filePath: { type: 'string', description: 'Path to .egf file' },
+              resourceId: { type: 'number', description: 'Resource ID to extract' },
+              outPath: { type: 'string', description: 'Output file path (.bmp or .png)' },
+            },
+            required: ['filePath', 'resourceId', 'outPath'],
+          },
+        },
+        {
+          name: 'eolens_egf_sheet',
+          description:
+            'Render a contact sheet of EGF resources side by side into a PNG, for visually identifying tiles by resource ID. Returns the image plus extracted/missing ID lists.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              filePath: { type: 'string', description: 'Path to .egf file' },
+              resourceIds: { type: 'array', items: { type: 'number' }, description: 'Resource IDs to include' },
+              columns: { type: 'number', description: 'Thumbnails per row (default 8)' },
+              outPath: { type: 'string', description: 'Optional file path to save the PNG to' },
+            },
+            required: ['filePath', 'resourceIds'],
           },
         },
         {
@@ -398,19 +441,63 @@ export function createMcpServer(): Server {
           };
         }
 
+        case 'eolens_map_tiles': {
+          const filePath = String(args?.filePath);
+          const buf = fs.readFileSync(filePath);
+          const map = readMap(new Uint8Array(buf));
+          const census = getMapTileCensus(map);
+          return {
+            content: [{ type: 'text', text: JSON.stringify(census, null, 2) }],
+          };
+        }
+
         case 'eolens_egf_extract': {
           const filePath = String(args?.filePath);
           const resourceId = Number(args?.resourceId);
           const outPath = String(args?.outPath);
           const buf = fs.readFileSync(filePath);
           const result = extractEgfBitmap(buf, resourceId);
-          fs.writeFileSync(outPath, result.bmp);
+          const asPng = outPath.toLowerCase().endsWith('.png');
+          const out = asPng ? encodePng(result.width, result.height, result.rgba) : result.bmp;
+          fs.writeFileSync(outPath, out);
+          const content: any[] = [
+            {
+              type: 'text',
+              text: `Extracted resource #${resourceId} (${result.width}x${result.height}) to ${outPath}`,
+            },
+          ];
+          if (asPng) {
+            content.push({ type: 'image', data: out.toString('base64'), mimeType: 'image/png' });
+          }
+          return { content };
+        }
+
+        case 'eolens_egf_sheet': {
+          const filePath = String(args?.filePath);
+          const resourceIds = (args?.resourceIds as number[]).map((n) => Number(n));
+          const columns = args?.columns !== undefined ? Number(args.columns) : 8;
+          const buf = fs.readFileSync(filePath);
+          const result = sheetEgfResources(buf, resourceIds, 0, columns);
+          if (args?.outPath) {
+            fs.writeFileSync(String(args.outPath), result.png);
+          }
           return {
             content: [
               {
                 type: 'text',
-                text: `Extracted resource #${resourceId} (${result.width}x${result.height}) to ${outPath}`,
+                text: JSON.stringify(
+                  {
+                    width: result.width,
+                    height: result.height,
+                    extracted: result.extracted,
+                    missing: result.missing,
+                    outPath: args?.outPath ?? null,
+                  },
+                  null,
+                  2,
+                ),
               },
+              { type: 'image', data: result.png.toString('base64'), mimeType: 'image/png' },
             ],
           };
         }

@@ -9,9 +9,9 @@ Built on [eolib](https://www.npmjs.com/package/eolib), with a token-efficient MC
 - **EDF**: decrypt / encrypt dialog string files (`dat003.edf`, `dat005.edf`, …)
 - **Map (.emf)**: summary, warps, NPCs, single-tile inspect, `to-json` / `from-json` with CRC32 RID recalculation, PNG `preview` rendered with the same tile mapping as eoweb
 - **Pub (`.eif` item, `.enf` npc, `.esf` spell, `.ecf` class)**: query by id / name, `to-json` / `from-json`
-- **EGF**: list graphic resources, extract to 32-bit BMP
+- **EGF**: list graphic resources, extract to 32-bit BMP or PNG, render contact sheets of tiles
 - **Quest (.eqf / .txt)**: parse EO+ quest scripts (same format Acorn loads from `Data/quests`), inspect states, list directories, export to JSON
-- **MCP server**: 14 tools over stdio for AI agents (`eolens_map_summary`, `eolens_pub_query`, `eolens_quest_summary`, `eolens_map_preview`, etc.)
+- **MCP server**: 16 tools over stdio for AI agents (`eolens_map_summary`, `eolens_pub_query`, `eolens_quest_summary`, `eolens_map_preview`, etc.)
 - **Library**: importable core (`src/core/*`) + full TypeScript types
 
 ## Install
@@ -67,6 +67,7 @@ eolens map npcs 00001.emf --json
 eolens map tile 00001.emf -x 10 -y 20
 eolens map to-json 00001.emf -o map.json
 eolens map from-json map.json -o 00001.emf
+eolens map tiles 00001.emf   # per-layer graphic-ID census (find road networks, dominant tiles)
 ```
 
 ### Map preview (PNG)
@@ -94,6 +95,8 @@ eolens pub from-json spells.json -t esf -o dsl001.esf
 eolens egf list gfx001.egf
 eolens egf list gfx001.egf --json
 eolens egf extract gfx001.egf --id 100 -o 100.bmp
+eolens egf extract gfx001.egf --id 100 -o 100.png   # PNG output via .png extension
+eolens egf sheet gfx003.egf --ids 395,477,555 -o sheet.png   # contact sheet (resource IDs)
 ```
 
 ### Quest (.eqf / .txt)
@@ -118,9 +121,9 @@ eolens mcp
 Stdio tools exposed:
 
 - `eolens_edf_decrypt` / `eolens_edf_encrypt`
-- `eolens_map_summary` / `eolens_map_inspect_tile` / `eolens_map_to_json` / `eolens_map_from_json` / `eolens_map_preview`
+- `eolens_map_summary` / `eolens_map_inspect_tile` / `eolens_map_to_json` / `eolens_map_from_json` / `eolens_map_preview` / `eolens_map_tiles`
 - `eolens_pub_query` / `eolens_pub_to_json` / `eolens_pub_from_json`
-- `eolens_egf_list` / `eolens_egf_extract`
+- `eolens_egf_list` / `eolens_egf_extract` / `eolens_egf_sheet`
 - `eolens_quest_summary` / `eolens_quest_to_json`
 
 Example Claude Desktop config:

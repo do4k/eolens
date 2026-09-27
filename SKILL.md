@@ -30,6 +30,7 @@ eolens map tile 00005.emf -x 41 -y 47
 eolens map to-json 00005.emf -o map.json
 eolens map from-json map.json -o 00005.emf  # recalculates CRC32 RID
 eolens map preview 00005.emf --gfx-dir <dir with gfxNNN.egf> -o preview.png [--scale 0.5]
+eolens map tiles 00005.emf                 # per-layer graphic-ID census (find road networks)
 
 # Pubs (.eif item / .enf npc / .esf spell / .ecf class — type auto-detected)
 eolens pub inspect pub/dtn001.enf --search "priest" -l 10
@@ -41,9 +42,10 @@ eolens pub from-json npc.json -t enf -o dtn001.enf
 eolens edf decrypt dat005.edf | head
 eolens edf encrypt lines.txt -o dat005.edf --id 5
 
-# Graphics archives (.egf)
+# Graphics archives (.egf — resource ID = map graphic ID + 100)
 eolens egf list gfx003.egf
-eolens egf extract gfx003.egf --id 455 -o tile.bmp   # 32-bit BMP, transparency preserved
+eolens egf extract gfx003.egf --id 395 -o tile.png   # PNG via .png extension (BMP default)
+eolens egf sheet gfx003.egf --ids 395,477,555 -o sheet.png  # contact sheet (resource IDs)
 
 # EO+ quests (.eqf / .txt — same format Acorn loads from Data/quests)
 eolens quest inspect 00057.txt
@@ -52,9 +54,9 @@ eolens quest list ./quests
 eolens quest to-json 00057.txt -o quest.json
 ```
 
-## MCP tools (14)
+## MCP tools (16)
 
-`eolens_edf_decrypt`, `eolens_edf_encrypt`, `eolens_map_summary`, `eolens_map_inspect_tile`, `eolens_map_to_json`, `eolens_map_from_json`, `eolens_map_preview` (returns PNG image + dimensions/missing graphics), `eolens_pub_query`, `eolens_pub_to_json`, `eolens_pub_from_json`, `eolens_egf_list`, `eolens_egf_extract`, `eolens_quest_summary`, `eolens_quest_to_json`.
+`eolens_edf_decrypt`, `eolens_edf_encrypt`, `eolens_map_summary`, `eolens_map_inspect_tile`, `eolens_map_to_json`, `eolens_map_from_json`, `eolens_map_preview` (returns PNG image + dimensions/missing graphics), `eolens_map_tiles` (per-layer graphic-ID census), `eolens_pub_query`, `eolens_pub_to_json`, `eolens_pub_from_json`, `eolens_egf_list`, `eolens_egf_extract` (BMP or PNG), `eolens_egf_sheet` (contact-sheet PNG), `eolens_quest_summary`, `eolens_quest_to_json`.
 
 Prefer `*_summary` / `inspect` / `states` for reading (token-efficient); use `to-json` only when full data is needed for editing. After any map tile edit, re-render with `map preview` (or `eolens_map_preview`) and view the PNG to confirm the change visually.
 

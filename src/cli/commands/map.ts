@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { Command } from 'commander';
-import { getMapSummary, inspectMapTile, jsonToMap, mapToJson, readMap } from '../../core/map.js';
+import { getMapSummary, getMapTileCensus, inspectMapTile, jsonToMap, mapToJson, readMap } from '../../core/map.js';
 import { renderMapPreview } from '../../core/render.js';
 
 export function makeMapCommand(): Command {
@@ -163,6 +163,37 @@ export function makeMapCommand(): Command {
       const bytes = jsonToMap(jsonStr, options.rid !== false);
       fs.writeFileSync(options.output, bytes);
       console.log(`Compiled map to ${options.output} (${bytes.length} bytes)`);
+    });
+
+  cmd
+    .command('tiles')
+    .argument('<file>', 'Path to .emf map file')
+    .option('--json', 'Output as JSON')
+    .option('--top <number>', 'Top graphic IDs to show per layer', '12')
+    .action((file, options) => {
+      if (!fs.existsSync(file)) {
+        console.error(`Error: File not found: ${file}`);
+        process.exit(1);
+      }
+      const buf = fs.readFileSync(file);
+      const map = readMap(new Uint8Array(buf));
+      const census = getMapTileCensus(map);
+
+      if (options.json) {
+        console.log(JSON.stringify(census, null, 2));
+      } else {
+        const top = parseInt(options.top, 10) || 12;
+        console.log(`=== Tile Census: ${file} ===`);
+        console.log(`Map: ${census.name || '(unnamed)'} ${census.dimensions.width}x${census.dimensions.height}, fill ${census.fillTile} (${census.fillCoveredTiles} tiles under fill)`);
+        for (const layer of census.layers) {
+          if (layer.explicitTiles === 0) continue;
+          console.log(`\nLayer ${layer.layer} (gfx${String(layer.gfxFile).padStart(3, '0')}.egf, resource = graphic + 100): ${layer.explicitTiles} tiles, ${layer.uniqueGraphics} unique`);
+          for (const t of layer.tiles.slice(0, top)) {
+            console.log(`  gfx ${t.graphicId} (res ${t.graphicId + 100}) x${t.count}`);
+          }
+          if (layer.tiles.length > top) console.log(`  ... and ${layer.tiles.length - top} more`);
+        }
+      }
     });
 
   cmd

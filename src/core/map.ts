@@ -1,6 +1,13 @@
 import { Emf, EoReader, EoWriter, MapTileSpec } from 'eolib';
 import { calculateRid } from './rid.js';
 
+/**
+ * Map layer index -> gfxNNN.egf file. Shared by the renderer and the tile
+ * census (mirrors eoweb LAYER_GFX_MAP): Ground, Objects, Overlay, DownWall,
+ * RightWall, Roof, Top, Shadow, Overlay2.
+ */
+export const LAYER_GFX_FILE = [3, 4, 5, 6, 6, 7, 3, 22, 5];
+
 export interface MapWarpSummary {
   fromX: number;
   fromY: number;
@@ -241,4 +248,61 @@ export function mapToJson(buffer: Uint8Array, pretty = true): string {
 export function jsonToMap(jsonStr: string, recalculateRid = true): Uint8Array {
   const mapData = JSON.parse(jsonStr);
   return writeMap(mapData, { recalculateRid });
+}
+
+export interface MapTileCensusLayer {
+  layer: number;
+  gfxFile: number;
+  /** Tiles with an explicit graphic (excludes fill-covered ground). */
+  explicitTiles: number;
+  uniqueGraphics: number;
+  /** Graphic IDs by usage, descending. */
+  tiles: { graphicId: number; count: number }[];
+}
+
+export interface MapTileCensus {
+  name: string;
+  dimensions: { width: number; height: number };
+  fillTile: number;
+  /** Ground tiles covered by the fill (no explicit graphic). */
+  fillCoveredTiles: number;
+  layers: MapTileCensusLayer[];
+}
+
+/**
+ * Counts graphic-ID usage per layer — identifies which tiles dominate a map
+ * (e.g. road networks) without dumping the full grid.
+ */
+export function getMapTileCensus(map: Emf): MapTileCensus {
+  const layers: MapTileCensusLayer[] = [];
+  let explicitGround = 0;
+  for (let li = 0; li < (map.graphicLayers?.length || 0); li++) {
+    const counts = new Map<number, number>();
+    const layer = map.graphicLayers[li];
+    for (const row of layer?.graphicRows || []) {
+      for (const tile of row.tiles || []) {
+        counts.set(tile.graphic, (counts.get(tile.graphic) || 0) + 1);
+      }
+    }
+    if (li === 0) {
+      for (const n of counts.values()) explicitGround += n;
+    }
+    layers.push({
+      layer: li,
+      gfxFile: LAYER_GFX_FILE[li] ?? -1,
+      explicitTiles: [...counts.values()].reduce((a, b) => a + b, 0),
+      uniqueGraphics: counts.size,
+      tiles: [...counts.entries()]
+        .map(([graphicId, count]) => ({ graphicId, count }))
+        .sort((a, b) => b.count - a.count),
+    });
+  }
+
+  return {
+    name: map.name,
+    dimensions: { width: map.width, height: map.height },
+    fillTile: map.fillTile,
+    fillCoveredTiles: map.width * map.height - explicitGround,
+    layers,
+  };
 }
