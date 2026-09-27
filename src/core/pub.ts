@@ -147,7 +147,10 @@ export function queryPub(type: PubType, pubData: any, options: PubQueryOptions =
   for (let idx = 0; idx < rawRecords.length; idx++) {
     const r = rawRecords[idx];
     if (r) {
-      r.id = idx;
+      // Pub record IDs are 1-based in game (file position + 1); the same
+      // convention Acorn uses (EnfExtension.GetNpc: index = id - 1) and that
+      // map spawn entries reference.
+      r.id = idx + 1;
       records.push(r);
     }
   }
