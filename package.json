@@ -1,0 +1,45 @@
+{
+  "name": "eolens",
+  "version": "0.1.0",
+  "description": "Lens of Truth for Endless Online game files — CLI and MCP server for inspecting, decrypting, and manipulating .edf, .emf, .pub, and .egf files.",
+  "type": "module",
+  "bin": {
+    "eolens": "./bin/eolens.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node ./bin/eolens.js",
+    "dev": "tsx ./src/cli/index.ts",
+    "mcp": "tsx ./src/mcp/index.ts",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "endless-online",
+    "heartwood",
+    "eolib",
+    "emf",
+    "enf",
+    "eif",
+    "edf",
+    "egf",
+    "mcp",
+    "model-context-protocol",
+    "cli"
+  ],
+  "author": "Dan",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "commander": "^13.1.0",
+    "eolib": "^2.0.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.7"
+  }
+}
