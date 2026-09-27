@@ -1,6 +1,6 @@
 # eolens
 
-Lens of Truth for Endless Online game files — CLI and MCP server for inspecting, decrypting, and manipulating `.edf`, `.emf`, `.pub` (`.eif` / `.enf` / `.esf` / `.ecf`), and `.egf` files.
+Lens of Truth for Endless Online game files — CLI and MCP server for inspecting, decrypting, and manipulating `.edf`, `.emf`, `.pub` (`.eif` / `.enf` / `.esf` / `.ecf`), `.egf`, and EO+ quest (`.eqf` / `.txt`) files.
 
 Built on [eolib](https://www.npmjs.com/package/eolib), with a token-efficient MCP layer for AI agents.
 
@@ -10,7 +10,8 @@ Built on [eolib](https://www.npmjs.com/package/eolib), with a token-efficient MC
 - **Map (.emf)**: summary, warps, NPCs, single-tile inspect, `to-json` / `from-json` with CRC32 RID recalculation
 - **Pub (`.eif` item, `.enf` npc, `.esf` spell, `.ecf` class)**: query by id / name, `to-json` / `from-json`
 - **EGF**: list graphic resources, extract to 32-bit BMP
-- **MCP server**: 11 tools over stdio for AI agents (`eolens_map_summary`, `eolens_pub_query`, etc.)
+- **Quest (.eqf / .txt)**: parse EO+ quest scripts (same format Acorn loads from `Data/quests`), inspect states, list directories, export to JSON
+- **MCP server**: 13 tools over stdio for AI agents (`eolens_map_summary`, `eolens_pub_query`, `eolens_quest_summary`, etc.)
 - **Library**: importable core (`src/core/*`) + full TypeScript types
 
 ## Install
@@ -37,6 +38,7 @@ Commands:
   map    Inspect, query, and convert .emf map files
   pub    Inspect, query, and convert pub files (.eif, .enf, .esf, .ecf)
   egf    Inspect and extract bitmaps from .egf archives
+  quest  Inspect EO+ quest files (.eqf / .txt) and export to JSON
   mcp    Start the MCP stdio server for AI agents
 ```
 
@@ -85,6 +87,18 @@ eolens egf list gfx001.egf --json
 eolens egf extract gfx001.egf --id 100 -o 100.bmp
 ```
 
+### Quest (.eqf / .txt)
+
+Same EO+ format Acorn loads from `Data/quests` (numeric filename = quest ID, e.g. `00013.eqf`). See [Apollo's EO+ guide](https://apollo-games.com/eoplus/) for the syntax.
+
+```bash
+eolens quest inspect 00001.txt
+eolens quest inspect 00001.txt --json
+eolens quest states 00001.txt
+eolens quest list ./quests --json
+eolens quest to-json 00001.txt -o quest.json
+```
+
 ### MCP server
 
 ```bash
@@ -98,6 +112,7 @@ Stdio tools exposed:
 - `eolens_map_summary` / `eolens_map_inspect_tile` / `eolens_map_to_json` / `eolens_map_from_json`
 - `eolens_pub_query` / `eolens_pub_to_json` / `eolens_pub_from_json`
 - `eolens_egf_list` / `eolens_egf_extract`
+- `eolens_quest_summary` / `eolens_quest_to_json`
 
 Example Claude Desktop config:
 

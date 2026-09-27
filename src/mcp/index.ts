@@ -23,6 +23,7 @@ import {
   readPub,
 } from '../core/pub.js';
 import { extractEgfBitmap, listEgfResources } from '../core/egf/egf.js';
+import { getQuestSummary, questToJson, readQuestFile } from '../core/quest.js';
 
 export function createMcpServer(): Server {
   const server = new Server(
@@ -192,6 +193,31 @@ export function createMcpServer(): Server {
               outPath: { type: 'string', description: 'Output .bmp file path' },
             },
             required: ['filePath', 'resourceId', 'outPath'],
+          },
+        },
+        {
+          name: 'eolens_quest_summary',
+          description:
+            'Parse an Endless Online EO+ quest file (.eqf / .txt, same format Acorn loads from Data/quests) and return a concise summary: quest name, version, state list with goals plus action/rule counts.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              filePath: { type: 'string', description: 'Path to .eqf or .txt quest file' },
+            },
+            required: ['filePath'],
+          },
+        },
+        {
+          name: 'eolens_quest_to_json',
+          description:
+            'Parse an EO+ quest file (.eqf / .txt) into full JSON: all states with descriptions, actions and rules.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              filePath: { type: 'string', description: 'Path to .eqf or .txt quest file' },
+              outPath: { type: 'string', description: 'Optional file path to save JSON to' },
+            },
+            required: ['filePath'],
           },
         },
       ],
@@ -370,6 +396,36 @@ export function createMcpServer(): Server {
                 text: `Extracted resource #${resourceId} (${result.width}x${result.height}) to ${outPath}`,
               },
             ],
+          };
+        }
+
+        case 'eolens_quest_summary': {
+          const filePath = String(args?.filePath);
+          const quest = readQuestFile(filePath);
+          if (!quest) {
+            throw new Error(`Could not parse quest file (no Main block or states): ${filePath}`);
+          }
+          const summary = getQuestSummary(quest);
+          return {
+            content: [{ type: 'text', text: JSON.stringify(summary, null, 2) }],
+          };
+        }
+
+        case 'eolens_quest_to_json': {
+          const filePath = String(args?.filePath);
+          const quest = readQuestFile(filePath);
+          if (!quest) {
+            throw new Error(`Could not parse quest file (no Main block or states): ${filePath}`);
+          }
+          const json = questToJson(quest);
+          if (args?.outPath) {
+            fs.writeFileSync(String(args.outPath), json, 'utf-8');
+            return {
+              content: [{ type: 'text', text: `Exported quest JSON to ${args.outPath}` }],
+            };
+          }
+          return {
+            content: [{ type: 'text', text: json }],
           };
         }
 

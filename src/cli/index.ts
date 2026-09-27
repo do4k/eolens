@@ -4,6 +4,7 @@ import { makeEdfCommand } from './commands/edf.js';
 import { makeMapCommand } from './commands/map.js';
 import { makePubCommand } from './commands/pub.js';
 import { makeEgfCommand } from './commands/egf.js';
+import { makeQuestCommand } from './commands/quest.js';
 import { runMcpServer } from '../mcp/index.js';
 
 export function createProgram(): Command {
@@ -11,13 +12,14 @@ export function createProgram(): Command {
 
   program
     .name('eolens')
-    .description('Lens of Truth: CLI and MCP server for Endless Online game files (.edf, .emf, .pub, .egf)')
+    .description('Lens of Truth: CLI and MCP server for Endless Online game files (.edf, .emf, .pub, .egf, .eqf quest)')
     .version('0.1.0');
 
   program.addCommand(makeEdfCommand());
   program.addCommand(makeMapCommand());
   program.addCommand(makePubCommand());
   program.addCommand(makeEgfCommand());
+  program.addCommand(makeQuestCommand());
 
   program
     .command('mcp')

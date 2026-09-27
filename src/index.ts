@@ -6,3 +6,4 @@ export * from './core/egf/pe-reader.js';
 export * from './core/egf/dib-reader.js';
 export * from './core/egf/bmp-writer.js';
 export * from './core/egf/egf.js';
+export * from './core/quest.js';
