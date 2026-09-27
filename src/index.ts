@@ -7,3 +7,5 @@ export * from './core/egf/dib-reader.js';
 export * from './core/egf/bmp-writer.js';
 export * from './core/egf/egf.js';
 export * from './core/quest.js';
+export * from './core/png.js';
+export * from './core/render.js';

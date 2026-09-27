@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import { Command } from 'commander';
 import { getMapSummary, inspectMapTile, jsonToMap, mapToJson, readMap } from '../../core/map.js';
+import { renderMapPreview } from '../../core/render.js';
 
 export function makeMapCommand(): Command {
   const cmd = new Command('map').description('Inspect, query, and convert Endless Online .emf map files');
@@ -162,6 +163,30 @@ export function makeMapCommand(): Command {
       const bytes = jsonToMap(jsonStr, options.rid !== false);
       fs.writeFileSync(options.output, bytes);
       console.log(`Compiled map to ${options.output} (${bytes.length} bytes)`);
+    });
+
+  cmd
+    .command('preview')
+    .argument('<file>', 'Path to .emf map file')
+    .requiredOption('--gfx-dir <dir>', 'Directory containing gfxNNN.egf files (gfx003-gfx022)')
+    .option('-o, --output <file>', 'Output PNG path (default: <map>_preview.png)')
+    .option('--scale <number>', 'Output scale factor (e.g. 0.5 for half size)', '1')
+    .action((file, options) => {
+      if (!fs.existsSync(file)) {
+        console.error(`Error: File not found: ${file}`);
+        process.exit(1);
+      }
+      const scale = parseFloat(options.scale);
+      const outPath = options.output || `${file.replace(/\.emf$/i, '')}_preview.png`;
+      const result = renderMapPreview(file, { gfxDir: options.gfxDir, scale });
+      fs.writeFileSync(outPath, result.png);
+      console.log(`Rendered ${result.width}x${result.height} preview to ${outPath} (${result.tilesDrawn} tiles)`);
+      if (result.missing.length > 0) {
+        console.log(`Warning: ${result.tilesMissing} tiles skipped, ${result.missing.length} missing graphics (showing up to 10):`);
+        for (const m of result.missing.slice(0, 10)) {
+          console.log(`  layer ${m.layer} gfx${String(m.gfxFile).padStart(3, '0')}.egf#${m.graphicId}`);
+        }
+      }
     });
 
   return cmd;

@@ -23,6 +23,7 @@ import {
   readPub,
 } from '../core/pub.js';
 import { extractEgfBitmap, listEgfResources } from '../core/egf/egf.js';
+import { renderMapPreview } from '../core/render.js';
 import { getQuestSummary, questToJson, readQuestFile } from '../core/quest.js';
 
 export function createMcpServer(): Server {
@@ -193,6 +194,21 @@ export function createMcpServer(): Server {
               outPath: { type: 'string', description: 'Output .bmp file path' },
             },
             required: ['filePath', 'resourceId', 'outPath'],
+          },
+        },
+        {
+          name: 'eolens_map_preview',
+          description:
+            'Render an Endless Online .emf map to a PNG image (same tile mapping as eoweb) so the result can be visually inspected after edits. Returns the image plus dimensions and any missing graphics.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              filePath: { type: 'string', description: 'Path to .emf map file' },
+              gfxDir: { type: 'string', description: 'Directory containing gfxNNN.egf files' },
+              outPath: { type: 'string', description: 'Optional file path to save the PNG to' },
+              scale: { type: 'number', description: 'Output scale factor, e.g. 0.5 for half size (default 1)' },
+            },
+            required: ['filePath', 'gfxDir'],
           },
         },
         {
@@ -395,6 +411,36 @@ export function createMcpServer(): Server {
                 type: 'text',
                 text: `Extracted resource #${resourceId} (${result.width}x${result.height}) to ${outPath}`,
               },
+            ],
+          };
+        }
+
+        case 'eolens_map_preview': {
+          const filePath = String(args?.filePath);
+          const gfxDir = String(args?.gfxDir);
+          const scale = args?.scale !== undefined ? Number(args.scale) : 1;
+          const result = renderMapPreview(filePath, { gfxDir, scale });
+          if (args?.outPath) {
+            fs.writeFileSync(String(args.outPath), result.png);
+          }
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    width: result.width,
+                    height: result.height,
+                    tilesDrawn: result.tilesDrawn,
+                    tilesMissing: result.tilesMissing,
+                    missing: result.missing.slice(0, 20),
+                    outPath: args?.outPath ?? null,
+                  },
+                  null,
+                  2,
+                ),
+              },
+              { type: 'image', data: result.png.toString('base64'), mimeType: 'image/png' },
             ],
           };
         }

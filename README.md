@@ -7,11 +7,11 @@ Built on [eolib](https://www.npmjs.com/package/eolib), with a token-efficient MC
 ## Features
 
 - **EDF**: decrypt / encrypt dialog string files (`dat003.edf`, `dat005.edf`, …)
-- **Map (.emf)**: summary, warps, NPCs, single-tile inspect, `to-json` / `from-json` with CRC32 RID recalculation
+- **Map (.emf)**: summary, warps, NPCs, single-tile inspect, `to-json` / `from-json` with CRC32 RID recalculation, PNG `preview` rendered with the same tile mapping as eoweb
 - **Pub (`.eif` item, `.enf` npc, `.esf` spell, `.ecf` class)**: query by id / name, `to-json` / `from-json`
 - **EGF**: list graphic resources, extract to 32-bit BMP
 - **Quest (.eqf / .txt)**: parse EO+ quest scripts (same format Acorn loads from `Data/quests`), inspect states, list directories, export to JSON
-- **MCP server**: 13 tools over stdio for AI agents (`eolens_map_summary`, `eolens_pub_query`, `eolens_quest_summary`, etc.)
+- **MCP server**: 14 tools over stdio for AI agents (`eolens_map_summary`, `eolens_pub_query`, `eolens_quest_summary`, `eolens_map_preview`, etc.)
 - **Library**: importable core (`src/core/*`) + full TypeScript types
 
 ## Install
@@ -69,6 +69,15 @@ eolens map to-json 00001.emf -o map.json
 eolens map from-json map.json -o 00001.emf
 ```
 
+### Map preview (PNG)
+
+Renders an `.emf` map to PNG with the same tile mapping as eoweb (isometric 64x32 tiles, per-layer gfx files and anchor offsets, animation frame 0, static tiles only). Needs a directory of `gfxNNN.egf` files. Ideal for visually checking a map after edits — the PNG can be fed back to an AI for review.
+
+```bash
+eolens map preview 00001.emf --gfx-dir ./gfx -o preview.png
+eolens map preview 00001.emf --gfx-dir ./gfx --scale 0.5 -o preview_small.png
+```
+
 ### Pub (.eif / .enf / .esf / .ecf)
 
 ```bash
@@ -109,7 +118,7 @@ eolens mcp
 Stdio tools exposed:
 
 - `eolens_edf_decrypt` / `eolens_edf_encrypt`
-- `eolens_map_summary` / `eolens_map_inspect_tile` / `eolens_map_to_json` / `eolens_map_from_json`
+- `eolens_map_summary` / `eolens_map_inspect_tile` / `eolens_map_to_json` / `eolens_map_from_json` / `eolens_map_preview`
 - `eolens_pub_query` / `eolens_pub_to_json` / `eolens_pub_from_json`
 - `eolens_egf_list` / `eolens_egf_extract`
 - `eolens_quest_summary` / `eolens_quest_to_json`
@@ -125,6 +134,14 @@ Example Claude Desktop config:
     }
   }
 }
+```
+
+## Agent skill
+
+`SKILL.md` at the repo root documents the CLI, MCP tools, and EO modding workflows for AI agents. Install it with the skills CLI:
+
+```bash
+npx skills add do4k/eolens
 ```
 
 ## Library usage
