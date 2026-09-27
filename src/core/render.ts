@@ -99,7 +99,11 @@ export function renderMapPreview(mapFile: string, opts: MapPreviewOptions): MapP
   const seenMissing = new Set<string>();
 
   function getBitmap(gfxFile: number, graphicId: number, layer: number): Bitmap | null {
-    const key = `${gfxFile}:${graphicId}`;
+    // EGF resource IDs are offset by +100 from map graphic IDs — the same
+    // convention eoweb (atlas loadResource id+100) and eomap-js
+    // (resourceID = gfx + 100) use.
+    const resourceId = graphicId + 100;
+    const key = `${gfxFile}:${resourceId}`;
     const cached = bmpCache.get(key);
     if (cached !== undefined) return cached;
     let bmp: Bitmap | null = null;
@@ -109,7 +113,7 @@ export function renderMapPreview(mapFile: string, opts: MapPreviewOptions): MapP
         buf = fs.readFileSync(path.join(opts.gfxDir, `gfx${String(gfxFile).padStart(3, '0')}.egf`));
         gfxBufs.set(gfxFile, buf);
       }
-      const ex = extractEgfBitmap(buf, graphicId, gfxFile);
+      const ex = extractEgfBitmap(buf, resourceId, gfxFile);
       bmp = { w: ex.width, h: Math.abs(ex.height), rgba: ex.rgba };
     } catch {
       bmp = null;
