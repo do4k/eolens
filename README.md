@@ -14,18 +14,78 @@ Built on [eolib](https://www.npmjs.com/package/eolib), with a token-efficient MC
 - **MCP server**: 16 tools over stdio for AI agents (`eolens_map_summary`, `eolens_pub_query`, `eolens_quest_summary`, `eolens_map_preview`, etc.)
 - **Library**: importable core (`src/core/*`) + full TypeScript types
 
-## Install
+## Installation
 
 Requires Node 18+.
 
+### CLI Installation
+
+**Global install (recommended):**
 ```bash
-# from source
+npm install -g git+https://github.com/do4k/eolens.git
+```
+Then run from anywhere:
+```bash
+eolens --help
+```
+
+**From source:**
+```bash
+git clone https://github.com/do4k/eolens.git
+cd eolens
 pnpm install
 pnpm build
-node ./bin/eolens.js --help
 
-# dev without build
+# Link to PATH globally:
+pnpm link --global
+# or symlink directly:
+ln -sf $(pwd)/bin/eolens.js ~/.local/bin/eolens
+
+# Development mode (runs directly with tsx, no build step needed):
 pnpm dev -- --help
+```
+
+### MCP Server Setup
+
+`eolens` includes a Model Context Protocol (MCP) server providing 16 tools for AI assistants (Claude Desktop, Cursor, OpenCode, Antigravity, etc.).
+
+**When installed globally:**
+Add to your client's MCP configuration (e.g. `claude_desktop_config.json`):
+```json
+{
+  "mcpServers": {
+    "eolens": {
+      "command": "eolens",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+**When running from source:**
+```json
+{
+  "mcpServers": {
+    "eolens": {
+      "command": "node",
+      "args": ["/absolute/path/to/eolens/bin/eolens.js", "mcp"]
+    }
+  }
+}
+```
+
+**For OpenCode (`opencode.json`):**
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "eolens": {
+      "type": "local",
+      "command": ["eolens", "mcp"],
+      "enabled": true
+    }
+  }
+}
 ```
 
 ## CLI Usage
@@ -126,18 +186,7 @@ Stdio tools exposed:
 - `eolens_egf_list` / `eolens_egf_extract` / `eolens_egf_sheet`
 - `eolens_quest_summary` / `eolens_quest_to_json`
 
-Example Claude Desktop config:
-
-```json
-{
-  "mcpServers": {
-    "eolens": {
-      "command": "node",
-      "args": ["/absolute/path/to/eolens/bin/eolens.js", "mcp"]
-    }
-  }
-}
-```
+See [MCP Server Setup](#mcp-server-setup) above for client configuration examples (Claude Desktop, Cursor, OpenCode, etc.).
 
 ## Agent skill
 
