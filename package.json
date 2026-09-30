@@ -8,7 +8,12 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": [
+    "bin",
+    "dist"
+  ],
   "scripts": {
+    "prepare": "tsc",
     "build": "tsc",
     "start": "node ./bin/eolens.js",
     "dev": "tsx ./src/cli/index.ts",

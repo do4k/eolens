@@ -31,6 +31,13 @@ export function createProgram(): Command {
   return program;
 }
 
-if (process.argv[1]?.endsWith('eolens.js') || process.argv[1]?.endsWith('cli/index.ts') || process.argv[1]?.endsWith('bin/eolens.js')) {
+if (
+  process.argv[1]?.endsWith('eolens') ||
+  process.argv[1]?.endsWith('eolens.js') ||
+  process.argv[1]?.endsWith('cli/index.ts') ||
+  process.argv[1]?.endsWith('cli/index.js') ||
+  process.argv[1]?.endsWith('bin/eolens.js')
+) {
   createProgram().parse(process.argv);
 }
+
